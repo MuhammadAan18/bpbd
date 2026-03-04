@@ -129,8 +129,13 @@ class IncidentReport extends Model
             app(IncidentReportService::class)->invalidateKpiCache();
         });
 
-        static::updated(function () {
+        static::updated(function ($report) {
             app(IncidentReportService::class)->invalidateKpiCache();
+
+            // Dispatch event to sync changes back to Google Sheets (if already synced once)
+            if ($report->synced_to_sheets_at && $report->status === self::STATUS_VERIFIED) {
+                \App\Events\ReportUpdated::dispatch($report);
+            }
         });
 
         static::deleted(function () {

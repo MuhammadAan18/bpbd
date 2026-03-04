@@ -38,13 +38,18 @@ class Index extends Component
     {
         try {
             $service = app(GoogleSheetsService::class);
-            $result  = $service->getKoboIncidents(1, 1000);
+            $result = $service->getKoboIncidents(1, 1000);
 
             if (empty($result['success']) || empty($result['data'])) {
                 return collect();
             }
 
             return collect($result['data'])->map(function ($kobo, $index) {
+                // normalize disaster_type to match website database
+                if (!empty($kobo['disaster_type'])) {
+                    $kobo['disaster_type'] = $this->normalizeDisasterType($kobo['disaster_type']);
+                }
+
                 // Use datetime_carbon built by parseKoboRow() for accurate sorting.
                 // It is a Carbon object parsed from the "d/m/Y H:i:s" datetime_raw.
                 $createdAt = $kobo['datetime_carbon'] ?? null;
@@ -59,9 +64,9 @@ class Index extends Component
                 }
 
                 return [
-                    'source'     => 'kobo',
-                    'data'       => $kobo,
-                    'id'         => 'kobo_' . $index,
+                    'source' => 'kobo',
+                    'data' => $kobo,
+                    'id' => 'kobo_' . $index,
                     'created_at' => $createdAt ?? \Carbon\Carbon::createFromTimestamp(0), // oldest if unknown
                 ];
             });
@@ -69,6 +74,22 @@ class Index extends Component
             Log::error('[Index] fetchKoboItems failed: ' . $e->getMessage());
             return collect();
         }
+    }
+
+    /**
+     * Convert a raw disaster type string from Kobo into the canonical name used on the website.
+     * Tries a lookup by slug first, falls back to humanizing the snake case.
+     */
+    private function normalizeDisasterType(string $raw): string
+    {
+        $slug = \Illuminate\Support\Str::slug($raw, '-');
+        $type = \App\Models\DisasterType::where('slug', $slug)->first();
+        if ($type) {
+            return $type->name;
+        }
+
+        // Fallback: replace underscores with spaces and capitalize words
+        return ucwords(str_replace('_', ' ', $raw));
     }
 
     /**
@@ -85,16 +106,16 @@ class Index extends Component
         if ($this->search) {
             $query->where(function ($q) {
                 $q->where('report_no', 'like', '%' . $this->search . '%')
-                  ->orWhere('title', 'like', '%' . $this->search . '%')
-                  ->orWhere('location_text', 'like', '%' . $this->search . '%');
+                    ->orWhere('title', 'like', '%' . $this->search . '%')
+                    ->orWhere('location_text', 'like', '%' . $this->search . '%');
             });
         }
 
         return $query->latest('reported_at')->get()->map(function ($r) {
             return [
-                'source'     => 'website',
-                'data'       => $r,
-                'id'         => 'web_' . $r->id,
+                'source' => 'website',
+                'data' => $r,
+                'id' => 'web_' . $r->id,
                 'created_at' => $r->verified_at ?? $r->reported_at,
             ];
         })->values();
@@ -106,7 +127,7 @@ class Index extends Component
     private function paginateCollection(\Illuminate\Support\Collection $items, int $perPage = 10): LengthAwarePaginator
     {
         // Use Livewire's current page (from WithPagination trait)
-        $page  = $this->getPage();
+        $page = $this->getPage();
         $total = $items->count();
 
         $slice = $items->slice(($page - 1) * $perPage, $perPage)->values();
@@ -117,7 +138,7 @@ class Index extends Component
             $perPage,
             $page,
             [
-                'path'  => request()->url(),
+                'path' => request()->url(),
                 'query' => request()->query(),
             ]
         );
@@ -127,8 +148,8 @@ class Index extends Component
     {
         $koboCount = 0;
         try {
-            $service   = app(GoogleSheetsService::class);
-            $result    = $service->getKoboIncidents(1, 1);
+            $service = app(GoogleSheetsService::class);
+            $result = $service->getKoboIncidents(1, 1);
             $koboCount = (int) ($result['pagination']['total'] ?? 0);
         } catch (\Throwable $e) {
             Log::error('[Index] getCounts kobo failed: ' . $e->getMessage());
@@ -137,11 +158,11 @@ class Index extends Component
         $websiteVerified = IncidentReport::where('status', 'verified')->count();
 
         return [
-            'submitted'    => IncidentReport::where('status', 'submitted')->count(),
+            'submitted' => IncidentReport::where('status', 'submitted')->count(),
             'under_review' => IncidentReport::where('status', 'under_review')->count(),
-            'verified'     => $websiteVerified + $koboCount,
-            'rejected'     => IncidentReport::where('status', 'rejected')->count(),
-            'all'          => IncidentReport::count(),
+            'verified' => $websiteVerified + $koboCount,
+            'rejected' => IncidentReport::where('status', 'rejected')->count(),
+            // 'all'          => IncidentReport::count(),
         ];
     }
 
@@ -150,7 +171,7 @@ class Index extends Component
         if ($this->status === 'verified') {
             // Merge website verified + KoBO
             $websiteItems = $this->fetchWebsiteItems('verified');
-            $koboItems    = $this->fetchKoboItems();
+            $koboItems = $this->fetchKoboItems();
 
             // Apply search filter for KoBO items
             if ($this->search) {
@@ -172,13 +193,13 @@ class Index extends Component
 
             $reports = $this->paginateCollection($merged);
         } else {
-            $items   = $this->fetchWebsiteItems($this->status);
+            $items = $this->fetchWebsiteItems($this->status);
             $reports = $this->paginateCollection($items);
         }
 
         return view('livewire.admin.reports.index', [
             'reports' => $reports,
-            'counts'  => $this->getCounts(),
+            'counts' => $this->getCounts(),
         ]);
     }
 }

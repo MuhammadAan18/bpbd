@@ -11,7 +11,7 @@ class IncidentReportService
     private const CACHE_KEY_TODAY = 'kpi.reports.today';
     private const CACHE_KEY_PENDING = 'kpi.reports.pending';
     private const CACHE_KEY_CASUALTY = 'kpi.casualty.stats';
-    private const CACHE_TTL = 600; // 5 minutes
+    private const CACHE_TTL = 120; // 2 minutes - reduced from 5 minutes for faster updates
 
     /**
      * Get total verified incident reports with caching

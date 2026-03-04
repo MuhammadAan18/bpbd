@@ -28,6 +28,10 @@ class SyncReportToGoogleSheets implements ShouldQueue
         try {
             // Sync the verified report to Google Sheets
             $this->sheetsService->appendReport($event->report);
+            
+            // Invalidate KPI cache to reflect new data immediately
+            $this->sheetsService->invalidateKpiCache();
+            
             Log::info('Report ' . $event->report->id . ' synced to Google Sheets automatically.');
         } catch (\Exception $e) {
             Log::error('Error syncing report to Google Sheets: ' . $e->getMessage());

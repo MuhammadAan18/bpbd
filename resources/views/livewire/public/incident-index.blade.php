@@ -51,7 +51,7 @@
 
     {{-- Loading skeleton on first render --}}
     <div wire:loading.class.remove="hidden" class="hidden">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-6">
             @for($i = 0; $i < 3; $i++)
                 <div class="glass rounded-2xl overflow-hidden animate-pulse">
                     <div class="h-48 bg-gray-300 rounded-t-2xl"></div>
@@ -67,7 +67,7 @@
 
     {{-- Cards Grid --}}
     <div wire:loading.remove>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-6">
             @forelse($incidents as $item)
                 @if($item['source'] === 'kobo')
                     @php $incident = $item['data']; @endphp
@@ -205,7 +205,7 @@
         </div>
 
         {{-- Pagination --}}
-        <div class="mt-8">
+        <div class="mt-8 px-6">
             {{ $incidents->links() }}
         </div>
     </div>

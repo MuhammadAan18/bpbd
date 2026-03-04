@@ -67,7 +67,7 @@
                             class="w-full rounded-xl border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm bg-white/50 backdrop-blur-sm">
                         @error('reporter_name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         @error('reporter_phone') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                        <p class="text-xs text-gray-500">Tidak akan dipublikasikan.</p>
+                        <p class="text-xs text-gray-500">Identitas tidak akan dipublikasikan.</p>
                     </div>
                 </div>
             </div>
@@ -152,7 +152,8 @@
                     </div>
                     <div id="map" class="h-80 w-full rounded-xl shadow-inner border border-gray-200 z-0 relative"></div>
                     <p class="text-xs text-gray-500 text-right">Lat: <span x-text="$wire.latitude || '-'"></span>, Lng:
-                        <span x-text="$wire.longitude || '-'"></span></p>
+                        <span x-text="$wire.longitude || '-'"></span>
+                    </p>
                 </div>
                 @error('latitude') <span class="text-red-500 text-xs block">{{ $message }}</span> @enderror
 
@@ -335,5 +336,32 @@
 
         // Re-initialize map when navigating back to this page
         document.addEventListener('livewire:navigated', initMap);
+
+        // After Livewire updates (including validation failures), or when the
+        // server explicitly tells us about an error, shift focus to the field.
+        document.addEventListener('livewire:load', function () {
+            // generic hook (fallback)
+            Livewire.hook('message.processed', (message, component) => {
+                const errors = component.serverMemo.errors || {};
+                const fields = Object.keys(errors);
+                if (fields.length > 0) {
+                    focusField(fields[0]);
+                }
+            });
+
+
+            function focusField(name) {
+                let el = document.querySelector(`[wire\\:model*="${name}"]`);
+                if (!el) {
+                    el = document.querySelector(`[name="${name}"]`);
+                }
+                if (el) {
+                    el.focus();
+                    if (typeof el.scrollIntoView === 'function') {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            }
+        });
     </script>
 </div>

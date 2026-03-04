@@ -26,7 +26,7 @@ class ReportCreate extends Component
     public $longitude;
     public $title;
     public $description;
-    
+
     // Reporter Identity (Optional but recommended)
     public $reporter_name;
     public $reporter_phone;
@@ -82,12 +82,13 @@ class ReportCreate extends Component
 
     public function save()
     {
+        // standard Livewire validation; errors are automatically sent to the frontend
         $this->validate();
 
         // Generate Report No: REP-YYMMDD-RANDOM
         $reportNo = 'REP-' . date('ymd') . '-' . strtoupper(Str::random(5));
-        
-        while(IncidentReport::where('report_no', $reportNo)->exists()) {
+
+        while (IncidentReport::where('report_no', $reportNo)->exists()) {
             $reportNo = 'REP-' . date('ymd') . '-' . strtoupper(Str::random(5));
         }
 
@@ -112,7 +113,7 @@ class ReportCreate extends Component
         // Handle Photo Upload
         if ($this->photo) {
             $path = $this->photo->store('incident-attachments', 'public');
-            
+
             ReportAttachment::create([
                 'incident_report_id' => $report->id,
                 'file_path' => $path,
@@ -124,10 +125,10 @@ class ReportCreate extends Component
 
         $this->submittedReportNo = $reportNo;
         $this->isSubmitted = true;
-        
+
         $this->reset(['photo', 'description', 'location_text', 'latitude', 'longitude', 'title']);
     }
-    
+
     public function render()
     {
         return view('livewire.public.report-create');

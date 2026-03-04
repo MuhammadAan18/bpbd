@@ -3,24 +3,9 @@
         <h2
             class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-600 space-y-8">
             Manajemen Laporan</h2>
-        <div class="flex gap-3">
-            <form action="{{ route('admin.google-sheets.sync') }}" method="POST"
-                onsubmit="return confirm('Apakah Anda yakin ingin menyinkronkan data verifikasi ke Google Sheets?');">
-                @csrf
-                <button type="submit"
-                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-                        </path>
-                    </svg>
-                    Sync Sheets
-                </button>
-            </form>
-            <div class="w-72">
-                <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari No. Laporan / Judul..."
-                    class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm">
-            </div>
+        <div class="w-72">
+            <input type="text" wire:model.live.debounce.300ms="search" placeholder="Cari No. Laporan / Judul..."
+                class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm">
         </div>
     </div>
 
@@ -44,16 +29,16 @@
                 ['id' => 'under_review', 'label' => 'Diproses', 'color' => 'yellow'],
                 ['id' => 'verified', 'label' => 'Terverifikasi', 'color' => 'green'],
                 ['id' => 'rejected', 'label' => 'Ditolak', 'color' => 'red'],
-                ['id' => 'all', 'label' => 'Semua', 'color' => 'gray'],
+                // ['id' => 'all', 'label' => 'Semua', 'color' => 'gray'],
             ];
         @endphp
 
         @foreach($tabs as $tab)
             <button wire:click="setStatus('{{ $tab['id'] }}')" class="px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-2
-                    {{ $status === $tab['id']
+                        {{ $status === $tab['id']
             ? 'border-' . $tab['color'] . '-500 text-' . $tab['color'] . '-600 bg-white'
             : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' 
-                    }}">
+                        }}">
                 {{ $tab['label'] }}
                 <span
                     class="px-2 py-0.5 rounded-full text-xs {{ $status === $tab['id'] ? 'bg-' . $tab['color'] . '-100 text-' . $tab['color'] . '-700' : 'bg-gray-100 text-gray-600' }}">
@@ -92,7 +77,8 @@
                                     <div class="flex flex-col gap-1">
                                         <span class="text-sm font-bold text-gray-900">{{ $item['data']['id'] ?? '-' }}</span>
                                         <span class="text-xs text-gray-500">
-                                            Laporan {{ $item['data']['disaster_type'] ?? '-' }} di {{ $item['data']['district'] ?? '-' }}
+                                            Laporan {{ $item['data']['disaster_type'] ?? '-' }} di
+                                            {{ $item['data']['district'] ?? '-' }}
                                         </span>
                                     </div>
                                 </td>
@@ -112,7 +98,8 @@
                                     <span class="text-sm text-gray-600">Admin</span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                         Terverifikasi
                                     </span>
                                 </td>

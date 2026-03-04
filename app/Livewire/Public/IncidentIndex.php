@@ -38,6 +38,11 @@ class IncidentIndex extends Component
             }
 
             return collect($result['data'])->map(function ($kobo) {
+                // apply normalization same as admin index
+                if (!empty($kobo['disaster_type'])) {
+                    $kobo['disaster_type'] = $this->normalizeDisasterType($kobo['disaster_type']);
+                }
+
                 return [
                     'source'       => 'kobo',
                     'data'         => $kobo,
@@ -137,5 +142,16 @@ class IncidentIndex extends Component
             'disaster_types'=> $disasterTypes,
             'regions'       => $regions,
         ]);
+    }
+
+    // fungsi untuk mengubah nama disaster menjadi sama
+    private function normalizeDisasterType(string $raw): string
+    {
+        $slug = \Illuminate\Support\Str::slug($raw, '-');
+        $type = \App\Models\DisasterType::where('slug', $slug)->first();
+        if ($type) {
+            return $type->name;
+        }
+        return ucwords(str_replace('_', ' ', $raw));
     }
 }

@@ -16,6 +16,9 @@ class GoogleSheetsService
     protected $sheetId;
     protected $sheetsService;
 
+    private const CACHE_KEY_KPI = 'kpi.google_sheets.data';
+    private const CACHE_TTL_KPI = 120; // 2 minutes
+
     public function __construct()
     {
         $this->spreadsheetId = env('GOOGLE_SHEETS_ID');
@@ -127,12 +130,106 @@ class GoogleSheetsService
         }
     }
 
+    /**
+     * Update an existing report row in Google Sheets
+     * Searches for the report by ID and updates its impact data
+     */
+    public function updateReportInSheets(IncidentReport $report)
+    {
+        try {
+            $sheetName = $this->sheetName; // "Sheet 2"
+            // Read all data to find the report row
+            $range = "{$sheetName}!A1:AP1000";
+
+            $response = $this->sheetsService->spreadsheets_values->get(
+                $this->spreadsheetId,
+                $range
+            );
+
+            $values = $response->getValues();
+            if (!$values || count($values) < 2) {
+                Log::warning('No data found in sheet to update report ' . $report->id);
+                return false;
+            }
+
+            // Find the row that contains this report's ID
+            $reportRowIndex = null;
+            foreach ($values as $idx => $row) {
+                // Skip header row (index 0)
+                if ($idx === 0)
+                    continue;
+
+                // Check if column 0 matches report ID (from website, usually UUID format)
+                if (!empty($row[0]) && $row[0] === $report->id) {
+                    $reportRowIndex = $idx + 1; // +1 because Google Sheets is 1-based
+                    break;
+                }
+            }
+
+            if ($reportRowIndex === null) {
+                Log::warning('Report ' . $report->id . ' not found in Google Sheets for update');
+                return false;
+            }
+
+            // Build updated row data
+            $row = $this->mapReportToRow($report);
+            $row = array_values($row);
+
+            // Update the specific range
+            $rangeToUpdate = sprintf("'%s'!A%d:AP%d", $sheetName, $reportRowIndex, $reportRowIndex);
+
+            $body = new \Google\Service\Sheets\ValueRange([
+                'values' => [$row]
+            ]);
+
+            $config = config('google');
+            $keyFile = storage_path('app/google-credentials.json');
+            $credentials = json_decode(file_get_contents($keyFile), true);
+            $googleClient = new Client();
+            $googleClient->setAuthConfig($credentials);
+            $googleClient->setScopes([Sheets::SPREADSHEETS]);
+
+            $tokenResponse = $googleClient->fetchAccessTokenWithAssertion();
+            $accessToken = $tokenResponse['access_token'];
+
+            $client = new \GuzzleHttp\Client();
+            $url = sprintf(
+                'https://sheets.googleapis.com/v4/spreadsheets/%s/values/%s',
+                $this->spreadsheetId,
+                rawurlencode($rangeToUpdate)
+            );
+
+            $response = $client->put($url, [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $accessToken,
+                    'Content-Type' => 'application/json'
+                ],
+                'query' => [
+                    'valueInputOption' => 'USER_ENTERED'
+                ],
+                'json' => ['values' => [$row]]
+            ]);
+
+            if ($response->getStatusCode() === 200) {
+                Log::info('Report ' . $report->id . ' successfully updated in Google Sheets');
+                return true;
+            }
+
+            return false;
+        } catch (\Exception $e) {
+            Log::error('Failed to update report ' . $report->id . ' in Google Sheets: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     protected function mapReportToRow(IncidentReport $report)
     {
         $row = [];
 
-        // Columns 0-8: Empty (Kobo/Existing data)
-        $row[0] = null;
+        // Column 0: store internal report ID so we can locate the row later
+        $row[0] = $report->id;
+
+        // Columns 1-8: empty placeholders (Kobo/Existing data not used for website rows)
         $row[1] = null;
         $row[2] = null;
         $row[3] = null;
@@ -268,8 +365,21 @@ class GoogleSheetsService
     /**
      * Get KPI data from Total_Data sheet in Google Sheets
      * Reads data from range A1:C2 (header + 1 data row)
+     * Now cached for 2 minutes to reduce Google Sheets API calls
      */
     public function getKpiData()
+    {
+        return \Illuminate\Support\Facades\Cache::remember(
+            self::CACHE_KEY_KPI,
+            self::CACHE_TTL_KPI,
+            fn() => $this->fetchKpiDataFromSheets()
+        );
+    }
+
+    /**
+     * Actually fetch KPI data from Google Sheets API
+     */
+    private function fetchKpiDataFromSheets()
     {
         try {
             $range = 'Total_Data!A1:C2';
@@ -299,19 +409,19 @@ class GoogleSheetsService
                 'success' => true,
                 'data' => [
                     'incident' => [
-                        'total' => (int)($dataMap['jumlah kejadian'] ?? 0),
+                        'total' => (int) ($dataMap['jumlah kejadian'] ?? 0),
                         'label' => 'Jumlah Kejadian',
                         'icon' => 'alert-triangle',
                         'color' => 'blue'
                     ],
                     'affected_people' => [
-                        'total' => (int)($dataMap['jiwa terdampak'] ?? 0),
+                        'total' => (int) ($dataMap['jiwa terdampak'] ?? 0),
                         'label' => 'Jiwa Terdampak',
                         'icon' => 'users',
                         'color' => 'orange'
                     ],
                     'damaged_houses' => [
-                        'total' => (int)($dataMap['total rumah terdampak'] ?? 0),
+                        'total' => (int) ($dataMap['total rumah terdampak'] ?? 0),
                         'label' => 'Total Rumah Terdampak',
                         'icon' => 'home',
                         'color' => 'yellow'
@@ -322,6 +432,14 @@ class GoogleSheetsService
             Log::error('Failed to fetch KPI data from Google Sheets: ' . $e->getMessage());
             return $this->getDefaultKpiData();
         }
+    }
+
+    /**
+     * Invalidate KPI cache (called when reports are synced to update dashboard)
+     */
+    public function invalidateKpiCache(): void
+    {
+        \Illuminate\Support\Facades\Cache::forget(self::CACHE_KEY_KPI);
     }
 
     /**
@@ -392,6 +510,24 @@ class GoogleSheetsService
                 }
             }
 
+            // Sort incidents by parsed datetime (newest first). rows without a valid
+            // datetime are pushed to the end so they don't interfere with ordering.
+            usort($incidents, function ($a, $b) {
+                $at = $a['datetime_carbon'] ?? null;
+                $bt = $b['datetime_carbon'] ?? null;
+
+                if ($at && $bt) {
+                    return $bt->getTimestamp() <=> $at->getTimestamp();
+                }
+                if ($at) {
+                    return -1; // a has date, b doesn't => a comes first
+                }
+                if ($bt) {
+                    return 1; // b has date, a doesn't
+                }
+                return 0;
+            });
+
             // Implement pagination
             $total = count($incidents);
             $offset = ($page - 1) * $limit;
@@ -443,7 +579,7 @@ class GoogleSheetsService
                 $row = $values[$i];
 
                 // Assuming first column is ID
-                if (!empty($row[0]) && (string)$row[0] === (string)$id) {
+                if (!empty($row[0]) && (string) $row[0] === (string) $id) {
                     $incident = $this->parseKoboRow($row, $headers);
                     return [
                         'success' => true,
@@ -485,8 +621,17 @@ class GoogleSheetsService
 
             // Split on first whitespace
             $parts = preg_split('/\s+/', $raw, 2);
-            $datePart = $parts[0] ?? '';   // e.g. "09/02/2026"
+            $datePart = $parts[0] ?? '';   // e.g. "09/02/2026" or "2026-03-01"
             $timePart = $parts[1] ?? '';   // e.g. "2:51:19"
+
+            // Normalize date format to dd/mm/YYYY for consistency with website data
+            if ($datePart && preg_match('/^\d{4}-\d{2}-\d{2}$/', $datePart)) {
+                try {
+                    $datePart = \Carbon\Carbon::createFromFormat('Y-m-d', $datePart)->format('d/m/Y');
+                } catch (\Throwable $e) {
+                    // leave as-is if parsing fails
+                }
+            }
 
             $incident['date'] = $datePart ?: $raw;
 
@@ -501,8 +646,8 @@ class GoogleSheetsService
             // Build a Carbon object for proper sorting (stored separately, not shown in view)
             $incident['datetime_carbon'] = null;
             if ($datePart && $timePart) {
-                $fullStr   = $datePart . ' ' . $incident['time'];
-                $formats   = ['d/m/Y H:i:s', 'd/m/Y H:i', 'm/d/Y H:i:s', 'd-m-Y H:i:s'];
+                $fullStr = $datePart . ' ' . $incident['time'];
+                $formats = ['d/m/Y H:i:s', 'd/m/Y H:i', 'm/d/Y H:i:s', 'd-m-Y H:i:s'];
                 foreach ($formats as $fmt) {
                     try {
                         $incident['datetime_carbon'] = \Carbon\Carbon::createFromFormat($fmt, $fullStr);

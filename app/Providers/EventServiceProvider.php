@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Events\ReportVerified;
+use App\Events\ReportUpdated;
 use App\Listeners\SyncReportToGoogleSheets;
+use App\Listeners\SyncReportUpdateToGoogleSheets;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -16,6 +18,9 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         ReportVerified::class => [
             SyncReportToGoogleSheets::class,
+        ],
+        ReportUpdated::class => [
+            SyncReportUpdateToGoogleSheets::class,
         ],
     ];
 

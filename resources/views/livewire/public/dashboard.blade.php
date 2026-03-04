@@ -74,7 +74,7 @@
             // Configuration
             const KPI_CONFIG = {
                 apiUrl: '{{ url("/api/v1/kpi/dashboard") }}',
-                refreshInterval: 300000, // 5 minutes
+                refreshInterval: 60000, // 60 seconds - faster updates for real-time data
                 timeout: 10000
             };
 
@@ -95,25 +95,47 @@
             };
 
             /**
-             * Render KPI card HTML from data
+             * Render KPI card HTML from data with counter animation
              */
             function renderKpiCard(label, value, icon = 'chart-bar', color = 'blue') {
                 const colorClass = COLOR_CLASS_MAP[color] || COLOR_CLASS_MAP['blue'];
                 const iconPath = ICON_MAP[icon] || ICON_MAP['check-circle'];
 
                 return `
-                    <div class="glass p-6 shadow-md rounded-2xl flex items-center gap-6 transform hover:scale-105 transition-transform duration-300">
-                        <div class="w-16 h-16 rounded-full ${colorClass} flex items-center justify-center">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${iconPath}"></path>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">${label}</p>
-                            <p class="text-4xl font-bold text-gray-800">${new Intl.NumberFormat('id-ID').format(value)}</p>
-                        </div>
-                    </div>
-                `;
+                            <div class="glass p-6 shadow-md rounded-2xl flex items-center gap-6 transform hover:scale-105 transition-transform duration-300">
+                                <div class="w-16 h-16 rounded-full ${colorClass} flex items-center justify-center">
+                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${iconPath}"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">${label}</p>
+                                    <p class="text-4xl font-bold text-gray-800 kpi-counter" data-target="${value}">0</p>
+                                </div>
+                            </div>
+                        `;
+            }
+
+            /**
+             * Animate counter from 0 to target value
+             */
+            function animateCounters() {
+                const counters = document.querySelectorAll('.kpi-counter');
+                counters.forEach(counter => {
+                    const target = parseInt(counter.getAttribute('data-target'), 10);
+                    const duration = 1000; // 1 second animation
+                    const increment = target / (duration / 16); // 60fps
+
+                    let current = 0;
+                    const timer = setInterval(() => {
+                        current += increment;
+                        if (current >= target) {
+                            current = target;
+                            clearInterval(timer);
+                        }
+                        counter.textContent = new Intl.NumberFormat('id-ID').format(Math.floor(current));
+                    }, 16);
+                });
             }
 
             /**
@@ -121,10 +143,10 @@
              */
             async function fetchAndRenderKpis() {
                 const container = document.getElementById('kpi-cards-container');
-                
+
                 try {
                     console.log('Fetching KPI data from:', KPI_CONFIG.apiUrl);
-                    
+
                     const response = await axios.get(KPI_CONFIG.apiUrl, {
                         timeout: KPI_CONFIG.timeout
                     });
@@ -157,6 +179,9 @@
 
                         container.innerHTML = html;
                         console.log('KPI data loaded successfully from Google Sheets', data);
+
+                        // Start counter animation
+                        animateCounters();
                     } else {
                         throw new Error('Invalid response format from API');
                     }
@@ -167,22 +192,22 @@
                         response: error.response?.data,
                         status: error.response?.status
                     });
-                    
+
                     // Display error in UI
                     container.innerHTML = `
-                        <div class="col-span-full glass p-6 shadow-md rounded-2xl">
-                            <div class="text-center space-y-2">
-                                <svg class="w-12 h-12 text-red-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <p class="text-sm font-medium text-gray-700">Gagal memuat data KPI</p>
-                                <p class="text-xs text-gray-500">${error.message}</p>
-                                <button onclick="window.refreshDashboardKpis()" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
-                                    Coba Lagi
-                                </button>
-                            </div>
-                        </div>
-                    `;
+                                <div class="col-span-full glass p-6 shadow-md rounded-2xl">
+                                    <div class="text-center space-y-2">
+                                        <svg class="w-12 h-12 text-red-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <p class="text-sm font-medium text-gray-700">Gagal memuat data KPI</p>
+                                        <p class="text-xs text-gray-500">${error.message}</p>
+                                        <button onclick="window.refreshDashboardKpis()" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
+                                            Coba Lagi
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
                 }
             }
 
@@ -193,16 +218,21 @@
                 // Load KPIs immediately on page load
                 fetchAndRenderKpis();
 
-                // Set up periodic refresh (every 5 minutes)
+                // Set up periodic refresh (every 60 seconds)
                 setInterval(fetchAndRenderKpis, KPI_CONFIG.refreshInterval);
             }
 
-            // Initialize when DOM is ready
+            // Initialize when DOM is ready (first page load)
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', initDashboard);
             } else {
                 initDashboard();
             }
+
+            // Also initialize when Livewire navigates back to this component
+            document.addEventListener('livewire:navigated', function () {
+                fetchAndRenderKpis();
+            });
 
             // Optional: Expose function for manual refresh button
             window.refreshDashboardKpis = fetchAndRenderKpis;
@@ -216,8 +246,8 @@
             <div class="flex justify-end items-center">
                 <span class="font-bold text-xs text-white bg-blue-500 px-2 py-1 rounded">Live Data</span>
             </div>
-            <div class="w-full aspect-video rounded-xl overflow-hidden shadow-sm bg-gray-50 border border-gray-100 relative group"
->
+            <div
+                class="w-full aspect-video rounded-xl overflow-hidden shadow-sm bg-gray-50 border border-gray-100 relative group">
                 <iframe
                     src="https://lookerstudio.google.com/embed/reporting/962829b6-9ae5-4b9b-b999-3bce9b8b24d8/page/2G6nF"
                     frameborder="0" style="border:0" allowfullscreen class="absolute top-0 left-0 w-full h-full"
@@ -238,8 +268,8 @@
                     frameborder="0" style="border:0" allowfullscreen class="absolute top-0 left-0 w-full h-full"
                     title="Peta Infografis Bencana"></iframe>
             </div>
-        </div>        
-        
+        </div>
+
         {{-- Page 2 --}}
         <div class="glass p-6 rounded-2xl space-y-4">
             <div class="flex justify-end items-center">

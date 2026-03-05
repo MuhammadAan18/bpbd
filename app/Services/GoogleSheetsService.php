@@ -43,25 +43,6 @@ class GoogleSheetsService
         $this->sheetsService = new Sheets($client);
     }
 
-    public function syncVerifiedReports()
-    {
-        // Fetch verified reports that haven't been synced yet
-        $reports = IncidentReport::where('status', IncidentReport::STATUS_VERIFIED)
-            ->whereNull('synced_to_sheets_at')
-            ->with(['disasterType', 'region'])
-            ->orderBy('verified_at', 'asc')
-            ->get();
-
-        $count = 0;
-        foreach ($reports as $report) {
-            if ($this->appendReport($report)) {
-                $count++;
-            }
-        }
-
-        return $count;
-    }
-
     /**
      * Append a single report to the sheet if not already synced
      */

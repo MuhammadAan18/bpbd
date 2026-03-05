@@ -46,9 +46,6 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::get('/reports/{report}/economic-impact', EconomicImpact::class)->name('reports.economic-impact');
     Route::get('/reports/{report}/basic-services-impact', BasicServicesImpact::class)->name('reports.basic-services-impact');
 
-    // Google Sheets Sync
-    Route::post('/google-sheets/sync', [App\Http\Controllers\Admin\GoogleSheetsController::class, 'sync'])->name('google-sheets.sync');
-
     // Jika Anda masih ingin profile dari Breeze:
     Route::view('/profile', 'profile')->name('profile');
 });

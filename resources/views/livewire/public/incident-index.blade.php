@@ -1,7 +1,8 @@
 <div class="space-y-8">
     {{-- Header --}}
     <div class="text-center space-y-4 py-8">
-        <h1 class="text-2xl sm:text-4xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">
+        <h1
+            class="text-2xl sm:text-4xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">
             Daftar Bencana
         </h1>
         <p class="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
@@ -10,7 +11,8 @@
     </div>
 
     {{-- Filter Bar --}}
-    <div class="glass p-4 rounded-xl flex flex-col md:flex-row gap-4 items-center justify-between sticky top-24 z-30 transition-all duration-300">
+    <div
+        class="glass p-4 rounded-xl flex flex-col md:flex-row gap-4 items-center justify-between sticky top-24 z-30 transition-all duration-300">
         <div class="w-full md:w-1/3">
             <div class="relative">
                 <input type="text" wire:model.live.debounce.300ms="search"
@@ -68,13 +70,16 @@
     {{-- Cards Grid --}}
     <div wire:loading.remove>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-6">
-            @forelse($incidents as $item)
+            @forelse($incidents as $index => $item)
                 @if($item['source'] === 'kobo')
-                    @php $incident = $item['data']; @endphp
+                    @php $incident = $item['data'];
+                    $incidentId = $index + 1; @endphp
                     {{-- KoBO Card (same UI as website) --}}
-                    <div class="glass rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col h-full">
+                    <a href="{{ route('public.incidents.show', ['source' => 'kobo', 'id' => $incidentId]) }}"
+                        class="glass rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col h-full cursor-pointer">
                         {{-- Header / Thumbnail placeholder --}}
-                        <div class="h-48 bg-gradient-to-br from-blue-100 to-indigo-200 relative overflow-hidden flex items-center justify-center">
+                        <div
+                            class="h-48 bg-gradient-to-br from-blue-100 to-indigo-200 relative overflow-hidden flex items-center justify-center">
                             <div class="text-center text-blue-300 opacity-60">
                                 <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -83,7 +88,8 @@
                             </div>
                             {{-- Disaster type badge --}}
                             <div class="absolute top-2 right-2">
-                                <span class="px-2 py-1 bg-white/90 backdrop-blur-md text-gray-800 text-xs font-bold rounded shadow-sm">
+                                <span
+                                    class="px-2 py-1 bg-white/90 backdrop-blur-md text-gray-800 text-xs font-bold rounded shadow-sm">
                                     {{ $incident['disaster_type'] ?? 'Bencana' }}
                                 </span>
                             </div>
@@ -104,8 +110,10 @@
                             </div>
 
                             {{-- Title (disaster type + region) --}}
-                            <h3 class="text-lg font-bold text-gray-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors">
-                                Laporan {{ ucfirst($incident['disaster_type'] ?? 'Bencana') }} di {{ $incident['district'] ?? $incident['region'] ?? 'Lokasi Tidak Diketahui' }}
+                            <h3
+                                class="text-lg font-bold text-gray-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors">
+                                Laporan {{ ucfirst($incident['disaster_type'] ?? 'Bencana') }} di
+                                {{ $incident['district'] ?? $incident['region'] ?? 'Lokasi Tidak Diketahui' }}
                             </h3>
 
                             {{-- detail --}}
@@ -122,18 +130,21 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                     </svg>
-                                    <span class="truncate max-w-[150px]">{{ $incident['village'] ?? '' }}{{ !empty($incident['village']) && !empty($incident['district']) ? ', ' : '' }}{{ $incident['district'] ?? '' }}{{ !empty($incident['district']) && !empty($incident['region']) ? ', ' : '' }}{{ $incident['region'] ?? '' }}</span>
+                                    <span
+                                        class="truncate max-w-[150px]">{{ $incident['village'] ?? '' }}{{ !empty($incident['village']) && !empty($incident['district']) ? ', ' : '' }}{{ $incident['district'] ?? '' }}{{ !empty($incident['district']) && !empty($incident['region']) ? ', ' : '' }}{{ $incident['region'] ?? '' }}</span>
                                 </div>
-                                <span class="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full border border-blue-200">
+                                <span
+                                    class="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full border border-blue-200">
                                     Kobo
                                 </span>
                             </div>
                         </div>
-                    </div>
+                    </a>
                 @else
                     @php $incident = $item['data']; @endphp
                     {{-- Website Card --}}
-                    <div class="glass rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col h-full">
+                    <a href="{{ route('public.incidents.show', ['source' => 'website', 'id' => $incident->id]) }}"
+                        class="glass rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 group flex flex-col h-full cursor-pointer">
                         {{-- Image / Map Placeholder --}}
                         <div class="h-48 bg-gray-200 relative overflow-hidden">
                             @php $thumb = $incident->attachments->first(); @endphp
@@ -149,7 +160,8 @@
                                 </div>
                             @endif
                             <div class="absolute top-2 right-2">
-                                <span class="px-2 py-1 bg-white/90 backdrop-blur-md text-gray-800 text-xs font-bold rounded shadow-sm">
+                                <span
+                                    class="px-2 py-1 bg-white/90 backdrop-blur-md text-gray-800 text-xs font-bold rounded shadow-sm">
                                     {{ $incident->disasterType->slug }}
                                 </span>
                             </div>
@@ -165,7 +177,8 @@
                                 {{ $incident->occurred_at->format('d M Y, H:i') }}
                             </div>
 
-                            <h3 class="text-lg font-bold text-gray-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors">
+                            <h3
+                                class="text-lg font-bold text-gray-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors">
                                 {{ $incident->title }}
                             </h3>
 
@@ -183,12 +196,13 @@
                                     </svg>
                                     <span class="truncate max-w-[150px]">{{ $incident->region->slug }}</span>
                                 </div>
-                                <span class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full border border-gray-200">
+                                <span
+                                    class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full border border-gray-200">
                                     Website
                                 </span>
                             </div>
                         </div>
-                    </div>
+                    </a>
                 @endif
             @empty
                 <div class="col-span-full py-16 text-center text-gray-500">

@@ -5,6 +5,7 @@ use App\Livewire\Public\Dashboard as PublicDashboard;
 use App\Livewire\Public\IncidentIndex;
 use App\Livewire\Public\KoboIncidents;
 use App\Livewire\Public\ReportCreate;
+use App\Livewire\Public\IncidentShow;
 
 use App\Livewire\Admin\Reports\Index as AdminReportsIndex;
 use App\Livewire\Admin\Reports\Show as AdminReportsShow;
@@ -20,6 +21,9 @@ Route::get('/', PublicDashboard::class)->name('public.dashboard');
 
 // List kejadian
 Route::get('/kejadian', IncidentIndex::class)->name('public.incidents');
+
+// Detail kejadian dengan diagram dampak
+Route::get('/kejadian/{source}/{id}', IncidentShow::class)->name('public.incidents.show');
 
 // Kobo incidents (from Google Sheets)
 Route::get('/kobo', KoboIncidents::class)->name('public.kobo');

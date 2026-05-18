@@ -4,26 +4,17 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+// Migration ini dibuat no-op karena district_id tidak digunakan di schema final.
+// Schema baru sudah menggunakan district_name (VARCHAR) langsung di tabel incident_reports.
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::table('incident_reports', function (Blueprint $table) {
-            $table->foreignId('district_id')->nullable()->after('region_id')->constrained('districts')->nullOnDelete();
-        });
+        // No-op: digantikan oleh kolom district_name di base migration
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::table('incident_reports', function (Blueprint $table) {
-            $table->dropForeign(['district_id']);
-            $table->dropColumn('district_id');
-        });
+        // No-op
     }
 };

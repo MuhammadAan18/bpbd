@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('regions', function (Blueprint $table) {
-            $table->id();
-            $table->string('regions_name') -> unique();
+            $table->tinyIncrements('id');
+            $table->string('regions_name', 50)->unique();
             $table->timestamps();
         });
     }

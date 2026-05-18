@@ -12,20 +12,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('report_attachments', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('incident_report_id')
-                ->constrained('incident_reports')
-                ->cascadeOnDelete();
+            $table->increments('id');
 
-            $table->string('file_path', 1024);         // path di storage
-            $table->string('original_name')->nullable();
-            $table->string('mime_type', 100)->nullable();
-            $table->unsignedBigInteger('file_size')->nullable();
-            $table->string('caption')->nullable();
+            // Foreign Key ke tabel incident_reports
+            $table->integer('id_incident_report')->unsigned();
+            $table->foreign('id_incident_report')->references('id')->on('incident_reports')->onDelete('cascade');
+
+            // Path/nama file di server
+            $table->string('file_path', 255);
+
+            // Ukuran file dalam Bytes (murni angka)
+            $table->integer('file_size')->unsigned();
 
             $table->timestamps();
 
-            $table->index('incident_report_id');
+            $table->index('id_incident_report');
         });
     }
 

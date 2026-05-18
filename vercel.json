@@ -17,6 +17,10 @@
             "dest": "/public/assets/$1"
         },
         {
+            "src": "/livewire/(.*)",
+            "dest": "/public/livewire/$1"
+        },
+        {
             "src": "/(.*)",
             "dest": "/api/index.php"
         }

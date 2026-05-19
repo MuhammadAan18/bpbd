@@ -6,27 +6,36 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::table('report_attachments', function (Blueprint $table) {
-            // Rename kolom lama
-            $table->renameColumn('id_incident_report', 'incident_report_id');
-            $table->renameColumn('file_size', 'size');
-            // Tambah kolom yang kurang
-            $table->string('mime')->nullable()->after('file_path');
-            $table->string('original_name')->nullable()->after('mime');
-            $table->string('caption')->nullable()->after('original_name');
+            // Hapus kolom lama hanya jika masih ada
+            if (Schema::hasColumn('report_attachments', 'id_incident_report')) {
+                $table->dropColumn('id_incident_report');
+            }
+            if (Schema::hasColumn('report_attachments', 'file_size')) {
+                $table->renameColumn('file_size', 'size');
+            }
+            // Tambah kolom baru hanya jika belum ada
+            if (!Schema::hasColumn('report_attachments', 'mime')) {
+                $table->string('mime')->nullable()->after('file_path');
+            }
+            if (!Schema::hasColumn('report_attachments', 'original_name')) {
+                $table->string('original_name')->nullable()->after('mime');
+            }
+            if (!Schema::hasColumn('report_attachments', 'caption')) {
+                $table->string('caption')->nullable();
+            }
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        //
+        Schema::table('report_attachments', function (Blueprint $table) {
+            if (Schema::hasColumn('report_attachments', 'size')) {
+                $table->renameColumn('size', 'file_size');
+            }
+            $table->dropColumn(['mime', 'original_name', 'caption']);
+        });
     }
 };

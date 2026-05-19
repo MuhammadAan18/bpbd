@@ -153,7 +153,7 @@
 
                     console.log('API Response:', response);
 
-                    if (response.data.success && response.data.data) {
+                    if (response.data.data) {
                         const data = response.data.data;
 
                         // Build HTML from API response

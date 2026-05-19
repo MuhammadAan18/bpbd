@@ -11,12 +11,7 @@ class GoogleCredentialsServiceProvider extends ServiceProvider
         $base64 = env('GOOGLE_CREDENTIALS_BASE64');
 
         if ($base64) {
-            $path = storage_path('storage/app/google-credentials.json');
-            
-            if (!file_exists(dirname($path))) {
-                mkdir(dirname($path), 0755, true);
-            }
-
+            $path = storage_path('app/google-credentials.json');
             file_put_contents($path, base64_decode($base64));
         }
     }

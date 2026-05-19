@@ -1,2 +1,9 @@
-/vendor
 /node_modules
+/tests
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
+/.git
+/README.md
+/phpunit.xml

@@ -9,14 +9,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('report_attachments', function (Blueprint $table) {
-            // Hapus kolom lama hanya jika masih ada
+            // Drop foreign key dulu sebelum drop kolom
             if (Schema::hasColumn('report_attachments', 'id_incident_report')) {
+                $table->dropForeign('report_attachments_id_incident_report_foreign');
                 $table->dropColumn('id_incident_report');
             }
             if (Schema::hasColumn('report_attachments', 'file_size')) {
                 $table->renameColumn('file_size', 'size');
             }
-            // Tambah kolom baru hanya jika belum ada
             if (!Schema::hasColumn('report_attachments', 'mime')) {
                 $table->string('mime')->nullable()->after('file_path');
             }

@@ -3,7 +3,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build && node -e \"fs.rmSync('node_modules', {recursive:true, force:true})\"",
+        "build": "vite build",
         "dev": "vite"
     },
     "devDependencies": {

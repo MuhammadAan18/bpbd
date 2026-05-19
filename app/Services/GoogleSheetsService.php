@@ -159,7 +159,7 @@ class GoogleSheetsService
             // Update the specific range
             $rangeToUpdate = sprintf("'%s'!A%d:AP%d", $sheetName, $reportRowIndex, $reportRowIndex);
 
-            $body = new \Google\Service\Sheets\ValueRange([
+            $body = new ValueRange([
                 'values' => [$row]
             ]);
 
@@ -608,7 +608,7 @@ class GoogleSheetsService
             // Normalize date format to dd/mm/YYYY for consistency with website data
             if ($datePart && preg_match('/^\d{4}-\d{2}-\d{2}$/', $datePart)) {
                 try {
-                    $datePart = \Carbon\Carbon::createFromFormat('Y-m-d', $datePart)->format('d/m/Y');
+                    $datePart = Carbon::createFromFormat('Y-m-d', $datePart)->format('d/m/Y');
                 } catch (\Throwable $e) {
                     // leave as-is if parsing fails
                 }
@@ -631,7 +631,7 @@ class GoogleSheetsService
                 $formats = ['d/m/Y H:i:s', 'd/m/Y H:i', 'm/d/Y H:i:s', 'd-m-Y H:i:s'];
                 foreach ($formats as $fmt) {
                     try {
-                        $incident['datetime_carbon'] = \Carbon\Carbon::createFromFormat($fmt, $fullStr);
+                        $incident['datetime_carbon'] = Carbon::createFromFormat($fmt, $fullStr);
                         break;
                     } catch (\Throwable $e) {
                         // try next format

@@ -1,27 +1,21 @@
 {
-    "version": 2,
-    "framework": null,
-    "installCommand": "npm install",
-    "buildCommand": "npm run build && rm -rf node_modules",
-    "outputDirectory": ".",
     "functions": {
         "api/index.php": {
-            "runtime": "vercel-php@0.7.3",
-            "excludeFiles": "node_modules/**"
+            "runtime": "vercel-php@0.7.3"
         }
     },
     "routes": [
         {
             "src": "/build/(.*)",
-            "dest": "/public/build/$1"
+            "dest": "/build/$1"
         },
         {
             "src": "/assets/(.*)",
-            "dest": "/public/assets/$1"
+            "dest": "/assets/$1"
         },
         {
             "src": "/livewire/(.*)",
-            "dest": "/public/livewire/$1"
+            "dest": "/livewire/$1"
         },
         {
             "src": "/(.*)",

@@ -112,7 +112,7 @@ class ReportCreate extends Component
 
         // Handle Photo Upload
         if ($this->photo) {
-            $path = $this->photo->store('incident-attachments', 'public');
+            $path = $this->photo->store('incident-attachments', 's3');
 
             ReportAttachment::create([
                 'incident_report_id' => $report->id,

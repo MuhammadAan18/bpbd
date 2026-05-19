@@ -115,9 +115,11 @@ class ReportCreate extends Component
             $path = $this->photo->store('incident-attachments', 's3');
 
             ReportAttachment::create([
-                'id_incident_report' => $report->id,
-                'file_path' => $path,
-                'file_size' => $this->photo->getSize(),
+                'incident_report_id' => $report->id,
+                'file_path' => $path,   
+                'size' => $this->photo->getSize(),
+                'mime' => $this->photo->getMimeType(),
+                'original_name'=> $this->photo->getClientOriginalName(),
             ]);
         }
 

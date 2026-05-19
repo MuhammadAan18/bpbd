@@ -40,7 +40,7 @@
                 class="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm bg-white/50">
                 <option value="">Semua Wilayah</option>
                 @foreach($regions as $region)
-                    <option value="{{ $region->id }}">{{ $region->slug }}</option>
+                    <option value="{{ $region->id }}">{{ $region->name }}</option>
                 @endforeach
             </select>
         </div>

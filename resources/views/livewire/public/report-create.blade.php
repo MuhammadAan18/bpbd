@@ -99,7 +99,7 @@
                                 class="w-full rounded-xl border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm bg-white/50 backdrop-blur-sm">
                                 <option value="">-- Pilih Wilayah --</option>
                                 @foreach($regions as $region)
-                                    <option value="{{ $region->id }}">{{ $region->slug }}</option>
+                                    <option value="{{ $region->id }}">{{ $region->name }}</option>
                                 @endforeach
                             </select>
                             @error('region_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror

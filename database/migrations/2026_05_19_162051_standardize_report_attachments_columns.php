@@ -9,17 +9,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('report_attachments', function (Blueprint $table) {
-            // Drop foreign key dulu sebelum drop kolom
-            if (Schema::hasColumn('report_attachments', 'id_incident_report')) {
-                $table->dropForeign('report_attachments_id_incident_report_foreign');
-                $table->dropColumn('id_incident_report');
-            }
+            // Hapus file_size karena size sudah ada
             if (Schema::hasColumn('report_attachments', 'file_size')) {
-                $table->renameColumn('file_size', 'size');
+                $table->dropColumn('file_size');
             }
-            if (!Schema::hasColumn('report_attachments', 'mime')) {
-                $table->string('mime')->nullable()->after('file_path');
-            }
+            // Tambah kolom yang belum ada
             if (!Schema::hasColumn('report_attachments', 'original_name')) {
                 $table->string('original_name')->nullable()->after('mime');
             }
@@ -32,10 +26,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('report_attachments', function (Blueprint $table) {
-            if (Schema::hasColumn('report_attachments', 'size')) {
-                $table->renameColumn('size', 'file_size');
-            }
-            $table->dropColumn(['mime', 'original_name', 'caption']);
+            $table->dropColumn(['original_name', 'caption']);
         });
     }
 };

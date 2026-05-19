@@ -66,6 +66,8 @@ return [
         /*
         | Path to json file
         */
-        'file' => storage_path('app/google-credentials.json'),
+        'file' => storage_path('storage/app/google-credentials.json'),
     ],
+
+    'application_credentials' => storage_path('storage/app/google-credentials.json'),
 ];

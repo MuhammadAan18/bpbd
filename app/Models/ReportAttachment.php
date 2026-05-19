@@ -10,9 +10,9 @@ class ReportAttachment extends Model
     protected $fillable = [
         'incident_report_id',
         'file_path',
-        'original_name',
         'mime_type',
-        'file_size',
+        'original_name',
+        'size',
         'caption',
     ];
 

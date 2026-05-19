@@ -24,6 +24,8 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             MasterDataSeeder::class,
+            DistrictsSeeder::class,
+            VillagesSeeder::class,
         ]);
     }
 }
